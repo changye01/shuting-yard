@@ -26,7 +26,7 @@ FUNCTION_ARG_COUNT = {
     'Max': 2,
     'Min': 2,
     'Round': 2,
-    "IF": 2,
+    "IF": 3,
 }
 
 # 算数运算符优先级
@@ -125,6 +125,33 @@ def assign(vari_dict, a, b):
     vari_dict[a] = b
 
 
+def arithmetic_calculation(vari_dict, a, b, op):
+    # 算数表达式实现
+    # python 没有switch 多分支选择 所以用字典来实现
+    arithmetic = {
+        '+': lambda vari, x, y: x + y,
+        '-': lambda vari, x, y: x - y,
+        '/': lambda vari, x, y: x / y,
+        '*': lambda vari, x, y: x * y,
+        '%': lambda vari, x, y: x % y,
+        '<': lambda vari, x, y: x < y,
+        '>': lambda vari, x, y: x > y,
+        "=": assign
+    }
+    return arithmetic.get(op, 0)(vari_dict, a, b)
+
+
+def function_calculation(func, *args):
+    # 函数表达式实现
+    function = {
+        'Min': lambda x, y: min(x, y),
+        'Max': lambda x, y: max(x, y),
+        'Round': lambda x, y: round(x, int(y)),
+        'IF': lambda x, y, z: y if x else z
+    }
+    return function.get(func, 0)(*args)
+
+
 def atof(s):
     val = sign = i = 0
     power = 1
@@ -152,29 +179,8 @@ def atof(s):
     return val * sign / power if power != 1 else val * sign
 
 
-def arithmetic_calculation(vari_dict, a, b, op):
-    # 算数表达式实现
-    # python 没有switch 多分支选择 所以用字典来实现
-    arithmetic = {
-        '+': lambda vari, x, y: float(x) + float(y),
-        '-': lambda vari, x, y: float(x) - float(y),
-        '/': lambda vari, x, y: float(x) / float(y),
-        '*': lambda vari, x, y: float(x) * float(y),
-        '%': lambda vari, x, y: float(x) % float(y),
-        "=": assign
-    }
-    return arithmetic.get(op, 0)(vari_dict, a, b)
-
-
-def function_calculation(func, *args):
-    # 函数表达式实现
-    function = {
-        'Min': lambda x, y: min(x, y),
-        'Max': lambda x, y: max(x, y),
-        'Round': lambda x, y: round(x, int(y)),
-        'IF': lambda x, y, z: y if x else z
-    }
-    return function.get(func, 0)(*args)
+def vari_value(vari_dict, vari_name):
+    return vari_dict.get(vari_name, vari_name) if is_variable(str(vari_name)) else vari_name
 
 
 def shunting_yard(formula: str, output: list):
@@ -331,9 +337,6 @@ def shunting_yard(formula: str, output: list):
 #         return True
 #     return False
 
-def vari_value(vari_dict, vari_name):
-    return vari_dict.get(vari_name, vari_name) if is_variable(str(vari_name)) else vari_name
-
 
 def execute(formula_list: list):
     print("execute: ", end='')
@@ -354,10 +357,9 @@ def execute(formula_list: list):
             # 运算符和函数的参数个数是已知的
             nargs = op_arg_count(c) if is_operator(c) else func_arg_count(c)
             # 栈中的参数少于nargs，则符号放错
-            # print(c, nargs, stack)
             if len(stack) < nargs:
                 # （error）用户没有在表达式中输入足够的值
-                print("Error: 表达式参数不足")
+                print("Error: %s 表达式参数不足" % c)
                 return False
             # Else 从堆栈取出nargs个参数
             # 使用值作为参数评估运算符。
@@ -375,7 +377,7 @@ def execute(formula_list: list):
                     # 第二个参数放在第一位
                     sec_sc = vari_value(vari_dict, stack.pop())
                     res = arithmetic_calculation(vari_dict, sec_sc, sc, c)
-            res and stack.append(res)
+            res is not None and stack.append(res)
         str_pos += 1
 
     if len(stack) == 1:
@@ -391,24 +393,29 @@ def main():
     # operators: = - + / * % !
     # formula = "a = D(f - b * c + d, !e, g)"
     # formula = "51 + ((1 + 2) * 4) - 31"
-    # formula = "1+2+3"
+    # formula = "1+2+3"l
     # Max
     # formula = "a = Max(100+(考核项.完成值-考核项.目标值)*2, 120)"
     # Min Round
     # formula = "Round(Min(80+(考核项.完成值/考核项.目标值-1)*100,120),2)"
     # Min Max IF Round
-    formula = "Min(100, Max(0, IF(考核项.完成值 / 考核项.目标值 < 0.5, 0, Round(考核项.完成值 / 考核项.目标值 * 100, 2))))"
-    complete = 10
-    target = 20
-    formula = formula.replace('考核项.完成值', str(complete))
-    formula = formula.replace('考核项.目标值', str(target))
+    # formula = "Min(100, Max(0, IF(考核项.完成值 / 考核项.目标值 < 0.5, 0, Round(考核项.完成值 / 考核项.目标值 * 100, 2))))"
+    formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(考核项.完成值>考核项.目标值 , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
+    complete_value = 60
+    target_value = 10
+    max_value = 50
+    min_value = 60
+    formula = formula.replace('考核项.完成值', str(complete_value))
+    formula = formula.replace('考核项.目标值', str(target_value))
+    formula = formula.replace('考核项.保底值', str(min_value))
+    formula = formula.replace('考核项.挑战值', str(max_value))
     print("input:%s" % formula)
 
     # todo : 增加预编译
     output = list()
     if shunting_yard(formula, output):
         print("output:", output)
-        # execute(output)
+        execute(output)
         # if (not execution_order(output)):
         #     print("Invalid input")
 
