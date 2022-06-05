@@ -5,7 +5,7 @@ OPERATOR_LEFT = ('+', '-', '/', '*', '%', '<', '>')
 # 分隔符列表
 DELIMITER_LIST = (',', '(', ')', ' ', ';')
 # 函数列表
-FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF')
+FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR')
 
 # 操作符需要的操作数个数
 OPERAND_COUNT = {
@@ -27,6 +27,7 @@ FUNCTION_ARG_COUNT = {
     'Min': 2,
     'Round': 2,
     "IF": 3,
+    'OR': 2,
 }
 
 # 算数运算符优先级
@@ -147,7 +148,8 @@ def function_calculation(func, *args):
         'Min': lambda x, y: min(x, y),
         'Max': lambda x, y: max(x, y),
         'Round': lambda x, y: round(x, int(y)),
-        'IF': lambda x, y, z: y if x else z
+        'IF': lambda x, y, z: y if x else z,
+        'OR': lambda x, y: x or y
     }
     return function.get(func, 0)(*args)
 
@@ -400,7 +402,8 @@ def main():
     # formula = "Round(Min(80+(考核项.完成值/考核项.目标值-1)*100,120),2)"
     # Min Max IF Round
     # formula = "Min(100, Max(0, IF(考核项.完成值 / 考核项.目标值 < 0.5, 0, Round(考核项.完成值 / 考核项.目标值 * 100, 2))))"
-    formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(考核项.完成值>考核项.目标值 , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
+    # formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(考核项.完成值>考核项.目标值 , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
+    formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(OR(0, 1) , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
     complete_value = 60
     target_value = 10
     max_value = 50
