@@ -5,9 +5,11 @@ OPERATOR_LEFT = ('+', '-', '/', '*', '%', '<', '>')
 # 分隔符关键字列表
 DELIMITER_LIST = (',', '(', ')', ' ', ';')
 # 函数关键字列表
-FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR')
+FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR', 'Def')
 # 流程关键字列表
 FLOW_LIST = ('if', 'else', 'then')
+# 预编译关键字列表
+PRE_COMPILE_LIST = ('Def')
 
 # 操作符需要的操作数个数
 OPERAND_COUNT = {
@@ -30,6 +32,7 @@ FUNCTION_ARG_COUNT = {
     'Round': 2,
     "IF": 3,
     'OR': 2,
+    'Def': 2,
 }
 
 # 算数运算符优先级
@@ -135,6 +138,10 @@ def assign(vari_dict, a, b):
     vari_dict[a] = b
 
 
+def define(vari_dict, a, b):
+    assign(vari_dict, a, b)
+
+
 def arithmetic_calculation(vari_dict, a, b, op):
     # 算数表达式实现
     # python 没有switch 多分支选择 所以用字典来实现
@@ -151,16 +158,17 @@ def arithmetic_calculation(vari_dict, a, b, op):
     return arithmetic.get(op)(vari_dict, a, b)
 
 
-def function_calculation(func, *args):
+def function_calculation(vari_dict, func, *args):
     # 函数表达式实现
     function = {
-        'Min': lambda x, y: min(x, y),
-        'Max': lambda x, y: max(x, y),
-        'Round': lambda x, y: round(x, int(y)),
-        'IF': lambda x, y, z: y if x else z,
-        'OR': lambda x, y: x or y
+        'Min': lambda vari, x, y: min(x, y),
+        'Max': lambda vari, x, y: max(x, y),
+        'Round': lambda vari, x, y: round(x, int(y)),
+        'IF': lambda vari, x, y, z: y if x else z,
+        'OR': lambda vari, x, y: x or y,
+        'Def': define
     }
-    return function.get(func)(*args)
+    return function.get(func)(vari_dict, *args)
 
 
 def atof(s):
@@ -221,7 +229,7 @@ def shunting_yard(formula: str, output: list):
     while str_pos < len(formula):
         c = parameter = formula[str_pos]
         i = str_pos + 1
-        if c == ' ':
+        if c == ' ' or c == ';':
             str_pos = i
             continue
         if c not in DELIMITER_LIST and not is_operator(c):
@@ -243,7 +251,7 @@ def shunting_yard(formula: str, output: list):
         #     if parameter == 'if':
         #         stack.append(parameter)
         #     elif parameter == 'then':
-                
+
         #     pass
         # 如果输入为函数分割符（如: 逗号）
         elif parameter == ',':
@@ -299,58 +307,58 @@ def shunting_yard(formula: str, output: list):
     return True
 
 
-# def execution_order(formula_list: list):
-#     print("order: (arguments in reverse order)")
-#     str_pos = 0
-#     run_num, res = 0, ''
-#     stack = []
-#
-#     print(formula_list)
-#     while str_pos < len(formula_list):
-#         # 读取下一个参数
-#         c = formula_list[str_pos]
-#         # 如果是数字或者标识，则推入栈中
-#         if is_indent(c):
-#             stack.append(c)
-#         # 如果是操作符 (操作符在这里表示运算符和函数)
-#         elif is_operator(c) or is_function(c):
-#             res = "_%02d" % run_num
-#             print("%s = " % res, end='')
-#             run_num += 1
-#             # 运算符和函数的参数个数是已知的
-#             nargs = op_arg_count(c)
-#             # 栈中的参数少于nargs，则符号放错
-#             if len(stack) < nargs:
-#                 # （error）用户没有在表达式中输入足够的值
-#                 print("Error: 表达式参数不足")
-#                 return False
-#             # Else 从堆栈取出nargs个参数
-#             # 使用值作为参数评估运算符。
-#             if is_function(c):
-#                 print("%s(" % c, end='')
-#                 while nargs > 0:
-#                     sc = stack.pop()
-#                     if nargs > 1:
-#                         print("%s, " % sc, end='')
-#                     else:
-#                         print("%s)" % sc)
-#                     nargs -= 1
-#             else:
-#                 sc = stack.pop()
-#                 if nargs == 1:
-#                     print("%s %s;" % (c, sc))
-#                 else:
-#                     sec_sc = stack.pop()
-#                     print("%s %s %s;" % (sec_sc, c, sc))
-#             stack.append(res)
-#         str_pos += 1
-#         # print(c, stack)
-#
-#     if len(stack) == 1:
-#         sc = stack.pop()
-#         print("%s is a result" % sc)
-#         return True
-#     return False
+"""
+def execution_order(formula_list: list):
+    print("order: (arguments in reverse order)")
+    str_pos = 0
+    run_num, res = 0, ''
+    stack = []
+    print(formula_list)
+    while str_pos < len(formula_list):
+        # 读取下一个参数
+        c = formula_list[str_pos]
+        # 如果是数字或者标识，则推入栈中
+        if is_indent(c):
+            stack.append(c)
+        # 如果是操作符 (操作符在这里表示运算符和函数)
+        elif is_operator(c) or is_function(c):
+            res = "_%02d" % run_num
+            print("%s = " % res, end='')
+            run_num += 1
+            # 运算符和函数的参数个数是已知的
+            nargs = op_arg_count(c)
+            # 栈中的参数少于nargs，则符号放错
+            if len(stack) < nargs:
+                # （error）用户没有在表达式中输入足够的值
+                print("Error: 表达式参数不足")
+                return False
+            # Else 从堆栈取出nargs个参数
+            # 使用值作为参数评估运算符。
+            if is_function(c):
+                print("%s(" % c, end='')
+                while nargs > 0:
+                    sc = stack.pop()
+                    if nargs > 1:
+                        print("%s, " % sc, end='')
+                    else:
+                        print("%s)" % sc)
+                    nargs -= 1
+            else:
+                sc = stack.pop()
+                if nargs == 1:
+                    print("%s %s;" % (c, sc))
+                else:
+                    sec_sc = stack.pop()
+                    print("%s %s %s;" % (sec_sc, c, sc))
+            stack.append(res)
+        str_pos += 1
+        # print(c, stack)
+    if len(stack) == 1:
+        sc = stack.pop()
+        print("%s is a result" % sc)
+        return True
+    return False
+"""
 
 
 def execute(formula_list: list):
@@ -383,7 +391,7 @@ def execute(formula_list: list):
                 while nargs:
                     args.insert(0, vari_value(vari_dict, stack.pop()))
                     nargs -= 1
-                res = function_calculation(c, *args)
+                res = function_calculation(vari_dict, c, *args)
             else:
                 sc = vari_value(vari_dict, stack.pop())
                 if nargs == 1:
@@ -395,12 +403,19 @@ def execute(formula_list: list):
             res is not None and stack.append(res)
         str_pos += 1
 
-    print(stack)
     if len(stack) == 1:
         sc = vari_value(vari_dict, stack.pop())
         print("%s is a result" % sc)
         return True
     return False
+
+
+def pre_compile(formula, complete_value, target_value, max_value, min_value):
+    formula = formula.replace('考核项.完成值', str(complete_value))
+    formula = formula.replace('考核项.目标值', str(target_value))
+    formula = formula.replace('考核项.保底值', str(min_value))
+    formula = formula.replace('考核项.挑战值', str(max_value))
+    return formula
 
 
 def main():
@@ -420,25 +435,18 @@ def main():
     #     120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
     # formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(OR(0, 1) , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,\
     #     120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
-    formula = "Max(100+(考核项.完成值-考核项.目标值)*2, 120)\
-                Round(Min(80+(考核项.完成值/考核项.目标值-1)*100,120),2)"
-#                  if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
-#  else 100+(考核项.完成值-考核项.目标值)
+    formula = "Def( a, 考核项.完成值/(考核项.目标值*0.1));\
+                Round(Min(a+(考核项.完成值/考核项.目标值-1)*100,6789),2)"
+    #                  if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
+    #  else 100+(考核项.完成值-考核项.目标值)
     # todo 碰到分隔符  "," " " 后停止
     # formula = "if 1 then 0 else 1"
-    complete_value = 60
-    target_value = 10
-    max_value = 50
-    min_value = 60
-    formula = formula.replace('考核项.完成值', str(complete_value))
-    formula = formula.replace('考核项.目标值', str(target_value))
-    formula = formula.replace('考核项.保底值', str(min_value))
-    formula = formula.replace('考核项.挑战值', str(max_value))
+
+    formula = pre_compile(formula, complete_value=66, target_value=11, max_value=50, min_value=60)
     print("input:%s" % formula)
 
-    # todo : 增加预编译
-    output = list()
     # 中缀表达式转逆波兰表达式
+    output = list()
     if shunting_yard(formula, output):
         print("output:", output)
         execute(output)
