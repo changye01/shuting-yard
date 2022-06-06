@@ -1,11 +1,13 @@
-# 操作符列表
+# 操作符关键字列表
 OPERATOR_LIST = ('+', '-', '/', '*', '!', '=', '<', '>')
-# 左操作符列表
+# 左操作符关键字列表
 OPERATOR_LEFT = ('+', '-', '/', '*', '%', '<', '>')
-# 分隔符列表
+# 分隔符关键字列表
 DELIMITER_LIST = (',', '(', ')', ' ', ';')
-# 函数列表
+# 函数关键字列表
 FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR')
+# 流程关键字列表
+FLOW_LIST = ('if', 'else', 'then')
 
 # 操作符需要的操作数个数
 OPERAND_COUNT = {
@@ -63,6 +65,13 @@ def is_operator(c):
     return c in OPERATOR_LIST
 
 
+def is_flow(c):
+    """
+    判断是否是流程关键字
+    """
+    return c in FLOW_LIST
+
+
 def is_digit(c):
     """
     判断是否是数字
@@ -111,15 +120,15 @@ def is_function(c):
 # 4		=		从右至左
 def op_precedent(c):
     # 输入不是运算符 返回0
-    return PRECEDENCE.get(c, 0)
+    return PRECEDENCE.get(c)
 
 
 def op_arg_count(c):
-    return OPERAND_COUNT.get(c, 0)
+    return OPERAND_COUNT.get(c)
 
 
 def func_arg_count(c):
-    return FUNCTION_ARG_COUNT.get(c, 0)
+    return FUNCTION_ARG_COUNT.get(c)
 
 
 def assign(vari_dict, a, b):
@@ -139,7 +148,7 @@ def arithmetic_calculation(vari_dict, a, b, op):
         '>': lambda vari, x, y: x > y,
         "=": assign
     }
-    return arithmetic.get(op, 0)(vari_dict, a, b)
+    return arithmetic.get(op)(vari_dict, a, b)
 
 
 def function_calculation(func, *args):
@@ -151,7 +160,7 @@ def function_calculation(func, *args):
         'IF': lambda x, y, z: y if x else z,
         'OR': lambda x, y: x or y
     }
-    return function.get(func, 0)(*args)
+    return function.get(func)(*args)
 
 
 def atof(s):
@@ -185,7 +194,26 @@ def vari_value(vari_dict, vari_name):
     return vari_dict.get(vari_name, vari_name) if is_variable(str(vari_name)) else vari_name
 
 
+def stack_recursion_pop(stack: list, output: list, end_char=""):
+    end_needle = False
+    while len(stack):
+        # stack char
+        sc = stack[-1]
+        # 扫描结束符号
+        if sc == end_char:
+            end_needle = True
+            break
+        else:
+            # 栈顶元素不是结束符号
+            # 将栈顶元素依次出栈并放入输出队列
+            output.append(stack.pop())
+    return end_needle
+
+
 def shunting_yard(formula: str, output: list):
+    """
+    中缀表达式转逆波兰表达式
+    """
     str_pos = 0
     # 操作数堆栈
     stack = []
@@ -211,23 +239,16 @@ def shunting_yard(formula: str, output: list):
         # 如果输入为函数记号，则压入堆栈
         elif is_function(parameter):
             stack.append(parameter)
+        # elif is_flow(parameter):
+        #     if parameter == 'if':
+        #         stack.append(parameter)
+        #     elif parameter == 'then':
+                
+        #     pass
         # 如果输入为函数分割符（如: 逗号）
         elif parameter == ',':
-            pe = False
-            while len(stack):
-                # stack char
-                sc = stack[-1]
-                # 扫描左括号
-                # 跳出输出循环，此时左括号作为函数边界判定，所以不出栈
-                if sc == '(':
-                    pe = True
-                    break
-                else:
-                    # 栈顶元素不是左括号
-                    # 将栈顶元素依次出栈并放入输出队列
-                    output.append(stack.pop())
             # 如果没有遇到左括号，则有可能是符号放错或者不匹配
-            if not pe:
+            if not stack_recursion_pop(stack, output, '('):
                 print("Error: 分隔符或括号不匹配")
                 return False
         # 如果输入符号为运算符
@@ -247,16 +268,8 @@ def shunting_yard(formula: str, output: list):
             stack.append(parameter)
         # 扫描到右括号
         elif parameter == ')':
-            pe = False
             # 从栈顶向下扫描左括号，将扫描到左括号之前的栈顶运算符出栈并放入输出队列
-            while len(stack):
-                sc = stack[-1]
-                if sc == '(':
-                    pe = True
-                    break
-                else:
-                    output.append(stack.pop())
-            if not pe:
+            if not stack_recursion_pop(stack, output, '('):
                 print("Error: 括号不匹配")
                 return False
             # 左括号出栈且不放入输出队列
@@ -382,6 +395,7 @@ def execute(formula_list: list):
             res is not None and stack.append(res)
         str_pos += 1
 
+    print(stack)
     if len(stack) == 1:
         sc = vari_value(vari_dict, stack.pop())
         print("%s is a result" % sc)
@@ -402,8 +416,16 @@ def main():
     # formula = "Round(Min(80+(考核项.完成值/考核项.目标值-1)*100,120),2)"
     # Min Max IF Round
     # formula = "Min(100, Max(0, IF(考核项.完成值 / 考核项.目标值 < 0.5, 0, Round(考核项.完成值 / 考核项.目标值 * 100, 2))))"
-    # formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(考核项.完成值>考核项.目标值 , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
-    formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(OR(0, 1) , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
+    # formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(考核项.完成值>考核项.目标值 , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,\
+    #     120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
+    # formula = "Round( Min(IF( 考核项.完成值>考核项.保底值,60 , IF(OR(0, 1) , 60+(考核项.完成值-考核项.保底值)*40/(考核项.目标值-考核项.保底值) ,\
+    #     120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
+    formula = "Max(100+(考核项.完成值-考核项.目标值)*2, 120)\
+                Round(Min(80+(考核项.完成值/考核项.目标值-1)*100,120),2)"
+#                  if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
+#  else 100+(考核项.完成值-考核项.目标值)
+    # todo 碰到分隔符  "," " " 后停止
+    # formula = "if 1 then 0 else 1"
     complete_value = 60
     target_value = 10
     max_value = 50
@@ -416,6 +438,7 @@ def main():
 
     # todo : 增加预编译
     output = list()
+    # 中缀表达式转逆波兰表达式
     if shunting_yard(formula, output):
         print("output:", output)
         execute(output)
