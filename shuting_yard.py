@@ -1,3 +1,5 @@
+import re
+
 # 操作符关键字列表
 OPERATOR_LIST = ('+', '-', '/', '*', '!', '=', '<', '>')
 # 左操作符关键字列表
@@ -5,11 +7,9 @@ OPERATOR_LEFT = ('+', '-', '/', '*', '%', '<', '>')
 # 分隔符关键字列表
 DELIMITER_LIST = (',', '(', ')', ' ', ';')
 # 函数关键字列表
-FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR', 'Def')
+FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR', 'Def', 'IsNull')
 # 流程关键字列表
 FLOW_LIST = ('if', 'else', 'then')
-# 预编译关键字列表
-PRE_COMPILE_LIST = ('Def')
 
 # 操作符需要的操作数个数
 OPERAND_COUNT = {
@@ -33,6 +33,7 @@ FUNCTION_ARG_COUNT = {
     "IF": 3,
     'OR': 2,
     'Def': 2,
+    'IsNull': 1
 }
 
 # 算数运算符优先级
@@ -103,7 +104,7 @@ def is_variable(c):
     :param c:
     :return:
     """
-    return not is_function(c) and c.isalpha()
+    return not is_function(c) and re.match(r'[a-zA-Z]\w', c)
 
 
 def is_function(c):
@@ -142,6 +143,30 @@ def define(vari_dict, a, b):
     assign(vari_dict, a, b)
 
 
+def is_null(vari_dict, x):
+    return x in vari_dict or vari_dict.get(x, None) is None
+
+
+def min_func(vari_dict, a, b):
+    return min(a, b)
+
+
+def max_func(vari_dict, a, b):
+    return max(a, b)
+
+
+def round_func(vari_dict, a, b):
+    return round(a, int(b))
+
+
+def if_func(vari_dict, a, b, c):
+    return b if a else c
+
+
+def or_func(vari_dict, a, b):
+    return a or b
+
+
 def arithmetic_calculation(vari_dict, a, b, op):
     # 算数表达式实现
     # python 没有switch 多分支选择 所以用字典来实现
@@ -161,12 +186,13 @@ def arithmetic_calculation(vari_dict, a, b, op):
 def function_calculation(vari_dict, func, *args):
     # 函数表达式实现
     function = {
-        'Min': lambda vari, x, y: min(x, y),
-        'Max': lambda vari, x, y: max(x, y),
-        'Round': lambda vari, x, y: round(x, int(y)),
-        'IF': lambda vari, x, y, z: y if x else z,
-        'OR': lambda vari, x, y: x or y,
-        'Def': define
+        'Min': min_func,
+        'Max': max_func,
+        'Round': round_func,
+        'IF': if_func,
+        'OR': or_func,
+        'Def': define,
+        'IsNull': is_null
     }
     return function.get(func)(vari_dict, *args)
 
@@ -361,7 +387,7 @@ def execution_order(formula_list: list):
 """
 
 
-def execute(formula_list: list):
+def execute(formula_list: list, complete_value=None, target_value=None, max_value=None, min_value=None):
     print("execute: ", end='')
     str_pos = 0
     stack, vari_dict = [], {}
@@ -410,11 +436,11 @@ def execute(formula_list: list):
     return False
 
 
-def pre_compile(formula, complete_value, target_value, max_value, min_value):
-    formula = formula.replace('考核项.完成值', str(complete_value))
-    formula = formula.replace('考核项.目标值', str(target_value))
-    formula = formula.replace('考核项.保底值', str(min_value))
-    formula = formula.replace('考核项.挑战值', str(max_value))
+def pre_compile(formula):
+    formula = formula.replace('考核项.完成值', "complete_value")
+    formula = formula.replace('考核项.目标值', "target_value")
+    formula = formula.replace('考核项.保底值', "min_value")
+    formula = formula.replace('考核项.挑战值', "max_value")
     return formula
 
 
@@ -441,15 +467,14 @@ def main():
     #  else 100+(考核项.完成值-考核项.目标值)
     # todo 碰到分隔符  "," " " 后停止
     # formula = "if 1 then 0 else 1"
-
-    formula = pre_compile(formula, complete_value=66, target_value=11, max_value=50, min_value=60)
+    formula = "IsNull(考核项.完成值)"
+    formula = pre_compile(formula)
     print("input:%s" % formula)
-
     # 中缀表达式转逆波兰表达式
     output = list()
     if shunting_yard(formula, output):
         print("output:", output)
-        execute(output)
+        execute(output, complete_value=66, target_value=11, max_value=50, min_value=60)
         # if (not execution_order(output)):
         #     print("Invalid input")
 
