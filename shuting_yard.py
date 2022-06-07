@@ -139,11 +139,11 @@ def assign(vari_dict, a, b):
     vari_dict[a] = b
 
 
-def define(vari_dict, a, b):
+def define_func(vari_dict, a, b):
     assign(vari_dict, a, b)
 
 
-def is_null(vari_dict, x):
+def is_null_func(vari_dict, x):
     return x in vari_dict or vari_dict.get(x, None) is None
 
 
@@ -191,8 +191,8 @@ def function_calculation(vari_dict, func, *args):
         'Round': round_func,
         'IF': if_func,
         'OR': or_func,
-        'Def': define,
-        'IsNull': is_null
+        'Def': define_func,
+        'IsNull': is_null_func
     }
     return function.get(func)(vari_dict, *args)
 
