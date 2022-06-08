@@ -198,7 +198,7 @@ def function_calculation(vari_dict, func, *args):
 
 
 def atof(s):
-    val = sign = i = 0
+    val = i = 0
     power = 1
     while i < len(s) and s[i].isspace():
         i += 1
@@ -390,7 +390,13 @@ def execution_order(formula_list: list):
 def execute(formula_list: list, complete_value=None, target_value=None, max_value=None, min_value=None):
     print("execute: ", end='')
     str_pos = 0
-    stack, vari_dict = [], {}
+    stack = []
+    vari_dict = {
+        "complete_value": complete_value,
+        "target_value": target_value,
+        "max_value": max_value,
+        "min_value": min_value
+    }
 
     while str_pos < len(formula_list):
         # 读取下一个参数 char
@@ -463,16 +469,15 @@ def main():
     #     120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
     formula = "Def( a, 考核项.完成值/(考核项.目标值*0.1));\
                 Round(Min(a+(考核项.完成值/考核项.目标值-1)*100,6789),2)"
-    #                  if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
-    #  else 100+(考核项.完成值-考核项.目标值)
+    #                  if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
+    #  else 100+(考核项.完成值-考核项.目标值)
     # todo 碰到分隔符  "," " " 后停止
     # formula = "if 1 then 0 else 1"
     formula = "IsNull(考核项.完成值)"
-    formula = pre_compile(formula)
     print("input:%s" % formula)
     # 中缀表达式转逆波兰表达式
     output = list()
-    if shunting_yard(formula, output):
+    if shunting_yard(pre_compile(formula), output):
         print("output:", output)
         execute(output, complete_value=66, target_value=11, max_value=50, min_value=60)
         # if (not execution_order(output)):
