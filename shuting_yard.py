@@ -104,7 +104,7 @@ def is_variable(c):
     :param c:
     :return:
     """
-    return not is_function(c) and re.match(r'[a-zA-Z]\w', c)
+    return not is_function(c) and re.match(r'[a-zA-Z]\w?', c)
 
 
 def is_function(c):
@@ -473,7 +473,7 @@ def main():
     #  else 100+(考核项.完成值-考核项.目标值)
     # todo 碰到分隔符  "," " " 后停止
     # formula = "if 1 then 0 else 1"
-    formula = "IsNull(考核项.完成值)"
+    # formula = "IsNull(考核项.完成值)"
     print("input:%s" % formula)
     # 中缀表达式转逆波兰表达式
     output = list()
