@@ -9,7 +9,7 @@ DELIMITER_LIST = (',', '(', ')', ' ', ';')
 # 函数关键字列表
 FUNCTION_LIST = ('Min', 'Max', 'Round', 'IF', 'OR', 'Def', 'IsNull')
 # 流程关键字列表
-FLOW_LIST = ('if', 'else', 'then')
+FLOW_LIST = ('if', 'else', 'then', 'elzif', 'endif')
 
 # 操作符需要的操作数个数
 OPERAND_COUNT = {
@@ -251,6 +251,10 @@ def shunting_yard(formula: str, output: list):
     str_pos = 0
     # 操作数堆栈
     stack = []
+    # 执行表堆栈
+    e_stack = []
+    # 执行表字典
+    e_dict = []
 
     while str_pos < len(formula):
         c = parameter = formula[str_pos]
@@ -273,12 +277,18 @@ def shunting_yard(formula: str, output: list):
         # 如果输入为函数记号，则压入堆栈
         elif is_function(parameter):
             stack.append(parameter)
-        # elif is_flow(parameter):
-        #     if parameter == 'if':
-        #         stack.append(parameter)
-        #     elif parameter == 'then':
+        elif is_flow(parameter):
+            if parameter == 'if':
+                e_stack = []
+                stack_recursion_pop(stack, e_stack)
+                e_dict.append({"exp": e_stack, })
+            elif parameter == 'then':
+                pass
+            elif parameter == 'elif':
+                pass
+            elif parameter == 'endif':
+                pass
 
-        #     pass
         # 如果输入为函数分割符（如: 逗号）
         elif parameter == ',':
             # 如果没有遇到左括号，则有可能是符号放错或者不匹配
@@ -331,60 +341,6 @@ def shunting_yard(formula: str, output: list):
         output.append(stack.pop())
 
     return True
-
-
-"""
-def execution_order(formula_list: list):
-    print("order: (arguments in reverse order)")
-    str_pos = 0
-    run_num, res = 0, ''
-    stack = []
-    print(formula_list)
-    while str_pos < len(formula_list):
-        # 读取下一个参数
-        c = formula_list[str_pos]
-        # 如果是数字或者标识，则推入栈中
-        if is_indent(c):
-            stack.append(c)
-        # 如果是操作符 (操作符在这里表示运算符和函数)
-        elif is_operator(c) or is_function(c):
-            res = "_%02d" % run_num
-            print("%s = " % res, end='')
-            run_num += 1
-            # 运算符和函数的参数个数是已知的
-            nargs = op_arg_count(c)
-            # 栈中的参数少于nargs，则符号放错
-            if len(stack) < nargs:
-                # （error）用户没有在表达式中输入足够的值
-                print("Error: 表达式参数不足")
-                return False
-            # Else 从堆栈取出nargs个参数
-            # 使用值作为参数评估运算符。
-            if is_function(c):
-                print("%s(" % c, end='')
-                while nargs > 0:
-                    sc = stack.pop()
-                    if nargs > 1:
-                        print("%s, " % sc, end='')
-                    else:
-                        print("%s)" % sc)
-                    nargs -= 1
-            else:
-                sc = stack.pop()
-                if nargs == 1:
-                    print("%s %s;" % (c, sc))
-                else:
-                    sec_sc = stack.pop()
-                    print("%s %s %s;" % (sec_sc, c, sc))
-            stack.append(res)
-        str_pos += 1
-        # print(c, stack)
-    if len(stack) == 1:
-        sc = stack.pop()
-        print("%s is a result" % sc)
-        return True
-    return False
-"""
 
 
 def execute(formula_list: list, complete_value=None, target_value=None, max_value=None, min_value=None):
@@ -469,12 +425,11 @@ def main():
     #     120-(考核项.挑战值-考核项.完成值)*20/(考核项.挑战值-考核项.目标值) )),120), 2)"
     formula = "Def( a, 考核项.完成值/(考核项.目标值*0.1));\
                 Round(Min(a+(考核项.完成值/考核项.目标值-1)*100,6789),2)"
-    #                  if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
+    # if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
     #  else 100+(考核项.完成值-考核项.目标值)
-    # todo 碰到分隔符  "," " " 后停止
     # formula = "if 1 then 0 else 1"
     # formula = "IsNull(考核项.完成值)"
-    print("input:%s" % formula)
+    print("input: %s" % formula)
     # 中缀表达式转逆波兰表达式
     output = list()
     if shunting_yard(pre_compile(formula), output):
