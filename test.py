@@ -2,21 +2,9 @@
 a = [
     {'exp': [3]},
     {'exp': [1], "jump": ['JMP', 2]},
-    {'exp': [1], 'jump': ['JNE', 3]},
+    {'exp': [1], 'jump': ['JNE', 3]},   
     {'exp': [3]}
 ]
-
-# for i in range(len(a)):
-#     # print(a[i])
-#     # print(a[i]['operator'][0])
-#     if 'jump' in a[i] and len(a[i]['jump']):
-#         print(a[i]['jump'])
-#         jump = a[i]['jump']
-#         if jump[0] == 'JNE':
-#             print
-#             i = jump[1]
-#     print(i)
-
 
 i = 0
 while i < len(a):
