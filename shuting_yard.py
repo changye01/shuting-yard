@@ -169,18 +169,25 @@ def or_func(vari_dict, a, b):
 
 def arithmetic_calculation(vari_dict, a, b, op):
     # 算数表达式实现
-    # python 没有switch 多分支选择 所以用字典来实现
-    arithmetic = {
-        '+': lambda vari, x, y: x + y,
-        '-': lambda vari, x, y: x - y,
-        '/': lambda vari, x, y: x / y,
-        '*': lambda vari, x, y: x * y,
-        '%': lambda vari, x, y: x % y,
-        '<': lambda vari, x, y: x < y,
-        '>': lambda vari, x, y: x > y,
-        "=": assign
-    }
-    return arithmetic.get(op)(vari_dict, a, b)
+    res = None
+    match op:
+        case '+':
+            res = a + b
+        case '-':
+            res = a - b
+        case '/':
+            res = a / b
+        case '*':
+            res = a * b
+        case '%':
+            res = a % b
+        case '<':
+            res = a < b
+        case '>':
+            res = a > b
+        case '=':
+            assign(vari_dict, a, b)
+    return res
 
 
 def function_calculation(vari_dict, func, *args):
