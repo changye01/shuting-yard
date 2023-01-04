@@ -419,7 +419,7 @@ def main():
     # operators: = - + / * % !
     # formula = "a = D(f - b * c + d, !e, g)"
     # formula = "51 + ((1 + 2) * 4) - 31"
-    # formula = "1+2+3"l
+    # formula = "1+2+3"
     # Max
     # formula = "a = Max(100+(考核项.完成值-考核项.目标值)*2, 120)"
     # Min Round
@@ -434,7 +434,7 @@ def main():
                 Round(Min(a+(考核项.完成值/考核项.目标值-1)*100,6789),2)"
     # if 考核项.完成值>考核项.目标值 then Min(100+(考核项.完成值-考核项.目标值),120)
     #  else 100+(考核项.完成值-考核项.目标值)
-    # formula = "if 1 then 0 else 1"
+    # formula = "if 1 then 0 else 1 endif"
     # formula = "IsNull(考核项.完成值)"
     print("input: %s" % formula)
     # 中缀表达式转逆波兰表达式
