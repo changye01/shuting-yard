@@ -31,8 +31,6 @@ class Error(object):
         self.error_name = error_name
         self.details = details
 
-    # def as_string(self):
-
     def __str__(self):
         res = f'{self.error_name}: {self.details}'
         res += f'File {self.pos_start.fn} , line {self.pos_end.ln + 1}'
