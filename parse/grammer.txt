@@ -1,0 +1,7 @@
+expr -> term((PLUS | MINUS) term)*
+
+term -> factor（(MUL | DIV) facter)*
+
+factor -> INT | FLOAT
+       -> (PLUS | MINUS) factor # -1, +2, --1, ---1
+       -> LPAREN expr RPAREN
