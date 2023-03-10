@@ -138,8 +138,7 @@ class Lexer(object):
         """
         tokens = []
         while self.current_char is not None:
-            if self.current_char in (" ", '\t'):
-                # 空格和tab 跳过不处理
+            if self.current_char in (" ", '\t'):  # 空格和tab 跳过不处理
                 self.advance()
             elif self.current_char in DIGITS:  # 数字
                 tokens.append(self.make_number())
