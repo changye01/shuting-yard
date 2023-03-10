@@ -111,12 +111,10 @@ class Position(object):
         # return Position(self.idx, self.ln, self.col, self.fn, self.txt)
 
 
-"""
-   词法分析器
-"""
-
-
 class Lexer(object):
+    """
+       词法分析器
+    """
 
     def __init__(self, fn, text):
         self.fn = fn
@@ -225,12 +223,11 @@ class UnaryOpNode(object):
         return f'{self.op_token}, {self.node}'
 
 
-"""
-语法解析结果类
-"""
-
-
 class ParserResult(object):
+    """
+    语法解析结果类
+    """
+
     def __init__(self):
         self.error = None
         self.node = None
@@ -251,12 +248,11 @@ class ParserResult(object):
         return res
 
 
-"""
-语法解析器
-"""
-
-
 class Parser(object):
+    """
+    语法解析器
+    """
+
     def __init__(self, tokens):
         self.current_token = None
         self.tokens = tokens
