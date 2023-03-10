@@ -258,6 +258,7 @@ class ParserResult(object):
 
 class Parser(object):
     def __init__(self, tokens):
+        self.current_token = None
         self.tokens = tokens
         self.token_idx = -1
         self.advance()
