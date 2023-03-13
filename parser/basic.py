@@ -18,12 +18,12 @@ TT_LPAREN = "LPAREN"
 TT_RPAREN = "RPAREN"
 TT_EOF = "EOF"
 
-"""
-自定义Error
-"""
-
 
 class Error(object):
+    """
+    自定义Error
+    """
+
     def __init__(self, pos_start, pos_end, error_name, details):
         """
         :param pos_start: 错误开始位置
@@ -37,8 +37,8 @@ class Error(object):
         self.details = details
 
     def __str__(self):
-        res = f'{self.error_name}: {self.details}'
-        res += f'File {self.pos_start.fn} , line {self.pos_end.ln + 1}'
+        res = f'{self.error_name}: {self.details},'
+        res += f'File {self.pos_start.fn}, line {self.pos_end.ln + 1}'
         return res
 
 
@@ -165,7 +165,7 @@ class Lexer(object):
                 pos_start = self.pos.copy()  # python -> 引用性调用， 赋值后操作会影响原有对象
                 char = self.current_char
                 self.advance()
-                return [], IllegalCharError(pos_start, self.pos, f"'{char}")
+                return [], IllegalCharError(pos_start, self.pos, f"'{char}'")
         tokens.append(Token(TT_EOF, pos_start=self.pos))
         return tokens, None
 
@@ -357,6 +357,8 @@ class Parser(object):
 def run(fn, text):
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
+    if error:
+        return tokens,error
     # 生成AST
     parser = Parser(tokens)
     ast = parser.parse()
