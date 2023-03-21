@@ -64,6 +64,7 @@ class Lexer(object):
     def make_number(self):
         num_str = ""
         dot_count = 0
+        pos_start = self.pos.copy()
 
         while self.current_char is not None and self.current_char in DIGITS + ".":
             if self.current_char == '.':
@@ -75,6 +76,6 @@ class Lexer(object):
                 num_str += self.current_char
             self.advance()
         if dot_count == 0:
-            return Token(TT_INT, int(num_str))
+            return Token(TT_INT, int(num_str), pos_start, self.pos)
         else:
-            return Token(TT_FLOAT, float(num_str))
+            return Token(TT_FLOAT, float(num_str), pos_start, self.pos)

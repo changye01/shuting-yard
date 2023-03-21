@@ -21,6 +21,7 @@ class ParserResult(object):
         return self
 
     def register(self, res):
+        # 避免递归子层执行报错， 父层可以判断
         if isinstance(res, ParserResult):
             if res.error:
                 self.error = res.error
