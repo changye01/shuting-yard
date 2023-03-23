@@ -34,6 +34,14 @@ class Lexer(object):
                 self.advance()
             elif self.current_char in DIGITS:  # 数字
                 tokens.append(self.make_number())
+            elif self.current_char in LETTERS:  # 字符
+                tokens.append(self.make_identifier())
+            elif self.current_char == '=':
+                tokens.append(Token(TT_EQ, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == '^':
+                tokens.append(Token(TT_POW, pos_start=self.pos))
+                self.advance()
             elif self.current_char == '+':
                 tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self.advance()
@@ -79,3 +87,21 @@ class Lexer(object):
             return Token(TT_INT, int(num_str), pos_start, self.pos)
         else:
             return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+
+    def make_identifier(self):
+        """
+        识别变量
+        """
+        variable_str = ""
+        pos_start = self.pos.copy()
+
+        while self.current_char is not None and self.current_char in LETTERS_DIGITS + "_":
+            variable_str += self.current_char
+            self.advance()
+
+        if variable_str in KEYWORDS:
+            token_type = TT_KEYWORDS
+        else:
+            token_type = TT_IDENTIFIER
+
+        return Token(token_type, variable_str, pos_start, self.pos)

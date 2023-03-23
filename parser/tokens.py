@@ -1,11 +1,11 @@
-"""
-常量
-"""
-DIGITS = "0123456789"
+import string
 
-"""
-Token types
-"""
+# 常量
+DIGITS = "0123456789"
+LETTERS = string.ascii_letters  # A-Z + a-z
+LETTERS_DIGITS = LETTERS + DIGITS
+
+# Token types
 TT_INT = "INT"
 TT_FLOAT = "FLOAT"
 TT_PLUS = "PLUS"
@@ -15,6 +15,14 @@ TT_DIV = "DIV"
 TT_LPAREN = "LPAREN"
 TT_RPAREN = "RPAREN"
 TT_EOF = "EOF"
+TT_EQ = "EQ"
+TT_POW = "POW"
+TT_IDENTIFIER = "IDENTIFIER"
+TT_KEYWORDS = "KEYWORDS"
+
+KEYWORDS = [
+    'var',  # 定义变量的关键字
+]
 
 
 class Token(object):
@@ -38,6 +46,15 @@ class Token(object):
         # Token 多个字符 123.122
         if pos_end:
             self.pos_end = pos_end
+
+    def matches(self, type_, value):
+        """
+        判断token是否相同
+        :param type_:
+        :param value:
+        :return:
+        """
+        return self.type == type_ and self.value == value
 
     def __repr__(self):
         # 方便调试 看信息

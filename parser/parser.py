@@ -11,6 +11,7 @@ class ParserResult(object):
     def __init__(self):
         self.error = None
         self.node = None
+        self.advance_count = 0
 
     def success(self, node):
         self.node = node
@@ -20,13 +21,20 @@ class ParserResult(object):
         self.error = error
         return self
 
+    def register_advancement(self):
+        self.advance_count += 1
+
     def register(self, res):
-        # 避免递归子层执行报错， 父层可以判断
-        if isinstance(res, ParserResult):
-            if res.error:
-                self.error = res.error
-            return res.node
-        return res
+        # # 避免递归子层执行报错， 父层可以判断
+        # if isinstance(res, ParserResult):
+        #     if res.error:
+        #         self.error = res.error
+        #     return res.node
+        # return res
+        self.advance_count += res.advance_count
+        if res.error:
+            self.error = res.error
+        return res.node
 
 
 class Parser(object):
@@ -56,7 +64,7 @@ class Parser(object):
             ))
         return res
 
-    def factor(self):
+    def factor1(self):
         """
         factor -> INT | FLOAT
                -> (PLUS | MINUS) factor
@@ -113,24 +121,137 @@ class Parser(object):
             "Expected int or float"
         ))
 
+    def factor(self):
+        """
+        factor  -> (PLUS | MINUS) factor
+                -> power
+        :return:
+        """
+        res = ParserResult()
+        token = self.current_token
+
+        if token.type in (TT_MINUS, TT_PLUS):
+            res.register_advancement()
+            self.advance()
+            factor = res.register(self.factor())
+            if res.error:
+                return res
+            return res.success(UnaryOpNode(token, factor))
+        return self.power()
+
+    def power(self):
+        """
+        power   -> atom (POW factor) *
+        :return:
+        """
+        return self.bin_op(self.atom, (TT_POW,), self.factor)
+
+    def atom(self):
+        res = ParserResult()
+        token = self.current_token
+
+        if token.type in (TT_INT, TT_FLOAT):
+            res.register_advancement()
+            self.advance()
+            return res.success(NumberNode(Token))
+
+        elif token.type == TT_IDENTIFIER:
+            res.register_advancement()
+            self.advance()
+            return res.success(VarAccessNode(Token))
+
+        elif token.type == TT_LPAREN:
+            res.register_advancement()
+            self.advance()
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+
+            if self.current_token.type == TT_RPAREN:
+                res.register_advancement()
+                self.advance()
+            else:
+                return res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected ')'"
+                ))
+        return res.failure(InvalidSyntaxError(
+            token.pos_start, token.pos_end,
+            "Expected int, float, identifier, '+', '-', '*', '/', '(' or ')'"
+        ))
+
     def term(self):
         # term -> factor ((MUL | DIV) facter)*
         return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
     def expr(self):
-        # term((PLUS | MINUS) term)*
-        return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+        # # term((PLUS | MINUS) term)*
+        # return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+        # expr    -> KEYWORD:var IDENTIFIER EQ expr
+        #         -> term (( PLUS | MINUS ) term)*
+        res = ParserResult()
 
-    def bin_op(self, func, ops):
+        if self.current_token.matches(TT_KEYWORDS, 'var'):
+            res.register_advancement()
+            self.advance()
+
+            # 不是变量名 报错
+            if self.current_token.type != TT_IDENTIFIER:
+                return res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected identifier"
+                ))
+
+            var_name = self.current_token
+            res.register_advancement()
+            self.advance()
+            if self.current_token.type != TT_EQ:
+                return res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected '='"
+                ))
+
+            res.register_advancement()
+            self.advance()
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+            return res.success(VarAssignNode(var_name, expr))
+        else:
+            node = self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+            if res.error:
+                return res.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected 'var', int, float, identifier, '+', '-' or '('"
+                ))
+            return res.success(node)
+
+    # def bin_op1(self, func, ops):
+    #     # 递归调用 构建AST
+    #     res = ParserResult()
+    #     # 1+1
+    #     # 1
+    #     # advance -> +
+    #     left = res.register(func())
+    #     while self.current_token.type in ops:
+    #         op_token = self.current_token
+    #         res.register(self.advance())
+    #         right = res.register(func())
+    #         left = BinOpNode(left, op_token, right)
+    #     return res.success(left)
+
+    def bin_op(self, func_a, ops, func_b=None):
         # 递归调用 构建AST
+        if func_b is None:
+            func_b = func_a
         res = ParserResult()
         # 1+1
         # 1
         # advance -> +
-        left = res.register(func())
+        left = res.register(func_a())
         while self.current_token.type in ops:
             op_token = self.current_token
             res.register(self.advance())
-            right = res.register(func())
+            right = res.register(func_b())
             left = BinOpNode(left, op_token, right)
         return res.success(left)

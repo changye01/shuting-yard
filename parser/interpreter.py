@@ -67,6 +67,10 @@ class Number(object):
                 return None, RTError(other.pos_start, other.pos_start, '分母不可为0', self.context)
             return Number(self.value / other.value).set_context(self.context), None
 
+    def powered_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value ** other.value).set_context(self.context), None
+
     def __repr__(self):
         return str(self.value)
 
@@ -81,6 +85,7 @@ class Context(object):
         self.display_name = display_name
         self.parent = parent
         self.parent_entry_pos = parent_entry_pos
+        self.symbol_table = None  # 符号表
 
 
 """

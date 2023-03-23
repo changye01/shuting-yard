@@ -1,6 +1,12 @@
 from lexer import Lexer
 from parser import Parser
-from interpreter import Interpreter, Context
+from interpreter import Interpreter, Context, Number
+from symbol_table import SymbolTable
+
+# 全局作用域
+global_symbol_table = SymbolTable()
+# 默认变量 null
+global_symbol_table.set('null', Number(0))
 
 
 def run(fn, text):
@@ -13,5 +19,6 @@ def run(fn, text):
 
     interpreter = Interpreter()
     context = Context("<program>")
+    context.symbol_table = global_symbol_table
     res = interpreter.visit(ast.node, context)
     return res.value, res.error
