@@ -71,6 +71,12 @@ class Number(object):
         if isinstance(other, Number):
             return Number(self.value ** other.value).set_context(self.context), None
 
+    def copy(self):
+        copy = Number(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+
     def __repr__(self):
         return str(self.value)
 
@@ -113,6 +119,35 @@ class Interpreter(object):
             Number(node.token.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
+    def visit_VarAccessNode(self, node, context):
+        """
+        访问变量的值
+        :param node:
+        :param context:
+        :return:
+        """
+        res = RTResult()
+        var_name = node.var_name_token.value  # 从token中获取变量名
+        value = context.symbol_table.get(var_name)  # 从符号表中取值
+        if not value:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                f"{var_name} is not defined",
+                context
+            ))
+        # copy 自身避免影响后续操作
+        value = value.copy().set_pos(node.pos_start, node.pos_end)
+        return res.success(value)
+
+    def visit_VarAssignNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_token.value
+        value = res.register(self.visit(node.value_node, context))
+        if res.error:
+            return res
+        context.symbol_table.set(var_name, value)
+        return res.success(value)
+
     def visit_BinOpNode(self, node, context):
         # 二元操作
         res = RTResult()
@@ -134,6 +169,14 @@ class Interpreter(object):
             result, error = left.multiplied_by(right)
         elif node.op_token.type == TT_DIV:
             result, error = left.dived_by(right)
+        elif node.op_token.type == TT_POW:
+            result, error = left.powered_by(right)
+        else:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                f"{node.op_token.type} is not support",
+                context
+            ))
 
         if error:
             return res.failure(error)

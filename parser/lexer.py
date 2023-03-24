@@ -5,7 +5,7 @@ from error import *
 
 class Lexer(object):
     """
-       词法分析器
+    词法分析器
     """
 
     def __init__(self, fn, text):

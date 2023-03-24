@@ -153,12 +153,12 @@ class Parser(object):
         if token.type in (TT_INT, TT_FLOAT):
             res.register_advancement()
             self.advance()
-            return res.success(NumberNode(Token))
+            return res.success(NumberNode(token))
 
         elif token.type == TT_IDENTIFIER:
             res.register_advancement()
             self.advance()
-            return res.success(VarAccessNode(Token))
+            return res.success(VarAccessNode(token))
 
         elif token.type == TT_LPAREN:
             res.register_advancement()
@@ -170,6 +170,7 @@ class Parser(object):
             if self.current_token.type == TT_RPAREN:
                 res.register_advancement()
                 self.advance()
+                return res.success(expr)
             else:
                 return res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
@@ -218,7 +219,7 @@ class Parser(object):
                 return res
             return res.success(VarAssignNode(var_name, expr))
         else:
-            node = self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+            node = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
             if res.error:
                 return res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
@@ -251,7 +252,8 @@ class Parser(object):
         left = res.register(func_a())
         while self.current_token.type in ops:
             op_token = self.current_token
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             right = res.register(func_b())
             left = BinOpNode(left, op_token, right)
         return res.success(left)
